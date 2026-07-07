@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-terang-bg text-white;
+}
+
+.card {
+  @apply bg-terang-card rounded-2xl p-5 shadow-lg;
+}
+
+.btn-primary {
+  @apply bg-terang-accent text-terang-bg font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition;
+}
+
+.btn-secondary {
+  @apply bg-white/10 text-white px-4 py-2 rounded-xl hover:bg-white/20 transition;
+}
+
+.badge-pending {
+  @apply bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full text-xs font-medium;
+}
+.badge-approved {
+  @apply bg-green-500/20 text-green-300 px-2 py-1 rounded-full text-xs font-medium;
+}
+.badge-rejected {
+  @apply bg-red-500/20 text-red-300 px-2 py-1 rounded-full text-xs font-medium;
+}
