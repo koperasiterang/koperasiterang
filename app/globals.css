@@ -2,28 +2,82 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-terang-bg text-white;
+:root {
+  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
 }
 
-.card {
-  @apply bg-terang-card rounded-2xl p-5 shadow-lg;
+@layer base {
+  body {
+    @apply bg-terang-bg text-terang-ink font-sans antialiased;
+    /* Motif lingkaran konsentris ala pitch deck, sangat halus. */
+    background-image:
+      radial-gradient(60rem 60rem at 110% -10%, rgba(18, 214, 160, 0.10), transparent 55%),
+      radial-gradient(45rem 45rem at -10% 110%, rgba(15, 181, 176, 0.08), transparent 55%);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, .font-display {
+    @apply font-display tracking-tight;
+  }
 }
 
-.btn-primary {
-  @apply bg-terang-accent text-terang-bg font-semibold px-4 py-2 rounded-xl hover:opacity-90 transition;
-}
+@layer components {
+  .card {
+    @apply bg-terang-card border border-terang-border rounded-2xl p-5 shadow-card;
+  }
+  .card-hover {
+    @apply transition-colors duration-200 hover:bg-terang-cardHover hover:border-terang-accent/40;
+  }
 
-.btn-secondary {
-  @apply bg-white/10 text-white px-4 py-2 rounded-xl hover:bg-white/20 transition;
-}
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-terang-accent text-terang-bg font-semibold px-4 py-2 rounded-xl
+      shadow-glow transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 bg-white/5 border border-terang-border text-terang-ink px-4 py-2 rounded-xl
+      transition-all duration-200 hover:bg-white/10 active:scale-[0.98];
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-1 text-terang-muted hover:text-terang-ink transition-colors;
+  }
 
-.badge-pending {
-  @apply bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full text-xs font-medium;
-}
-.badge-approved {
-  @apply bg-green-500/20 text-green-300 px-2 py-1 rounded-full text-xs font-medium;
-}
-.badge-rejected {
-  @apply bg-red-500/20 text-red-300 px-2 py-1 rounded-full text-xs font-medium;
+  .input {
+    @apply w-full mt-1 bg-terang-bg/60 border border-terang-border rounded-xl px-3 py-2 text-terang-ink
+      placeholder:text-terang-muted/60 outline-none transition-colors focus:border-terang-accent focus:ring-2 focus:ring-terang-accent/20;
+  }
+
+  .label {
+    @apply text-sm font-medium text-terang-muted;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.18em] text-terang-teal;
+  }
+
+  .badge-pending {
+    @apply inline-flex items-center gap-1 bg-terang-warn/15 text-terang-warn px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+  .badge-approved {
+    @apply inline-flex items-center gap-1 bg-terang-safe/15 text-terang-safe px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+  .badge-rejected {
+    @apply inline-flex items-center gap-1 bg-terang-danger/15 text-terang-danger px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+
+  /* Skeleton loading shimmer untuk loading.tsx */
+  .skeleton {
+    @apply relative overflow-hidden rounded-xl bg-white/5;
+  }
+  .skeleton::after {
+    content: "";
+    @apply absolute inset-0 -translate-x-full;
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.06),
+      transparent
+    );
+    animation: shimmer 1.5s infinite;
+  }
 }

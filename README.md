@@ -63,11 +63,20 @@ npm install
 
 ### 2. Setup Supabase
 1. Buat project baru di [supabase.com](https://supabase.com)
-2. Jalankan migrasi schema:
+2. Jalankan migrasi schema (URUTAN PENTING):
    ```bash
    npx supabase db push
-   # atau paste isi supabase/migrations/0001_schema.sql langsung ke SQL Editor Supabase
+   # atau paste berurutan ke SQL Editor Supabase:
+   #   supabase/migrations/0001_schema.sql      (tabel, RLS, view saldo)
+   #   supabase/migrations/0003_functions.sql   (RPC set_transaction_status — WAJIB)
    ```
+   > **Penting:** `0003_functions.sql` membuat RPC `set_transaction_status`
+   > (SECURITY DEFINER + `grant execute ... to authenticated`). Tanpa migrasi ini,
+   > perubahan status (pending → approved/rejected) gagal diam-diam karena tabel
+   > `transactions` sengaja tidak punya policy UPDATE (immutability by omission).
+2b. Aktifkan Realtime agar dashboard update tanpa refresh:
+   Supabase Dashboard → Database → Replication → publication `supabase_realtime`,
+   centang tabel `transactions`, `approvals`, dan `anomaly_flags`.
 3. Deploy edge functions:
    ```bash
    npx supabase functions deploy hash-batch

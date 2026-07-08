@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatIDR } from "@/lib/types";
+import { RealtimeRefresher } from "@/components/RealtimeRefresher";
 
 export default async function AnomaliesPage() {
   const supabase = createClient();
@@ -11,50 +11,60 @@ export default async function AnomaliesPage() {
     .select("*, transactions(description, amount, type, created_at)")
     .order("created_at", { ascending: false });
 
+  const openCount = flags?.filter((f: any) => !f.reviewed).length ?? 0;
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold">Watchdog Dashboard — Anomali</h1>
-        <Link href="/dashboard" className="text-sm text-white/50">
-          ← Dashboard
-        </Link>
-      </div>
-      <p className="text-sm text-white/50">
-        Anomali bisa ditandai manual oleh anggota, atau otomatis oleh sistem AI berdasarkan pola
-        transaksi historis koperasi.
-      </p>
+    <div className="space-y-5 animate-fade-in-up">
+      <RealtimeRefresher />
+
+      <header>
+        <p className="eyebrow mb-2">Watchdog Dashboard</p>
+        <h1 className="text-2xl font-display">Deteksi Anomali</h1>
+        <p className="text-terang-muted mt-1 text-sm max-w-2xl">
+          Anomali ditandai manual oleh anggota, atau otomatis oleh AI (Claude) berdasarkan pola
+          transaksi historis koperasi. {openCount > 0 ? `${openCount} anomali menunggu peninjauan.` : ""}
+        </p>
+      </header>
 
       <div className="space-y-3">
         {flags?.map((f: any) => (
           <div key={f.id} className="card">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="font-medium">{f.transactions?.description}</p>
-                <p className="text-xs text-white/40 mt-1">
-                  {formatIDR(f.transactions?.amount ?? 0)} ·{" "}
-                  {new Date(f.transactions?.created_at).toLocaleString("id-ID")}
+            <div className="flex justify-between items-start gap-3">
+              <div className="min-w-0">
+                <p className="font-medium">{f.transactions?.description ?? "Transaksi"}</p>
+                <p className="text-xs text-terang-muted mt-1">
+                  {formatIDR(f.transactions?.amount ?? 0)}
+                  {f.transactions?.created_at
+                    ? ` · ${new Date(f.transactions.created_at).toLocaleString("id-ID")}`
+                    : ""}
                 </p>
-                <p className="text-sm mt-2 text-yellow-300">{f.reason}</p>
+                <p className="text-sm mt-2 text-terang-warn">{f.reason}</p>
               </div>
               <span
                 className={
                   f.source === "ai"
-                    ? "badge-pending text-purple-300 bg-purple-500/20"
-                    : "badge-pending"
+                    ? "inline-flex items-center gap-1 bg-terang-teal/15 text-terang-teal px-2.5 py-1 rounded-full text-xs font-semibold shrink-0"
+                    : "inline-flex items-center gap-1 bg-terang-danger/15 text-terang-danger px-2.5 py-1 rounded-full text-xs font-semibold shrink-0"
                 }
               >
-                {f.source === "ai" ? "Terdeteksi AI" : "Dilaporkan Anggota"}
+                {f.source === "ai" ? "✦ Terdeteksi AI" : "⚑ Dilaporkan Anggota"}
               </span>
             </div>
-            {f.reviewed ? (
-              <p className="text-xs text-green-400 mt-2">✓ Sudah ditinjau pengawas</p>
-            ) : (
-              <p className="text-xs text-white/40 mt-2">Menunggu peninjauan pengawas</p>
-            )}
+            <div className="mt-3 border-t border-terang-border/50 pt-2">
+              {f.reviewed ? (
+                <p className="text-xs text-terang-safe">✓ Sudah ditinjau pengawas</p>
+              ) : (
+                <p className="text-xs text-terang-muted">● Menunggu peninjauan pengawas</p>
+              )}
+            </div>
           </div>
         ))}
         {(!flags || flags.length === 0) && (
-          <p className="text-white/40 text-sm">Belum ada anomali yang tercatat. Koperasi bersih ✓</p>
+          <div className="card text-center py-8">
+            <p className="text-terang-muted text-sm">
+              Belum ada anomali yang tercatat. Koperasi bersih ✓
+            </p>
+          </div>
         )}
       </div>
     </div>

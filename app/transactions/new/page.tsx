@@ -3,55 +3,53 @@ import Link from "next/link";
 
 export default function NewTransactionPage() {
   return (
-    <div className="max-w-md mx-auto space-y-4">
-      <Link href="/dashboard" className="text-sm text-white/50">
-        ← Kembali
+    <div className="max-w-md mx-auto space-y-4 animate-fade-in-up">
+      <Link href="/transactions" className="btn-ghost text-sm">
+        ← Kembali ke transaksi
       </Link>
       <div className="card">
-        <h1 className="text-lg font-bold mb-1">Catat Transaksi</h1>
-        <p className="text-sm text-white/50 mb-4">
-          Transaksi di atas Rp 5.000.000 otomatis masuk antrian persetujuan multi-signature.
+        <p className="eyebrow mb-2">Input Transaksi</p>
+        <h1 className="text-xl font-display mb-1">Catat Transaksi</h1>
+        <p className="text-sm text-terang-muted mb-5">
+          Transaksi di atas Rp 5.000.000 otomatis masuk antrian persetujuan multi-signature. Di
+          bawah itu langsung disetujui agar operasional harian tidak macet.
         </p>
 
         <form action={createTransaction} className="space-y-4">
           <div>
-            <label className="text-sm text-white/70">Jenis</label>
-            <select
-              name="type"
-              required
-              className="w-full mt-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2"
-            >
+            <label className="label">Jenis</label>
+            <select name="type" required className="input">
               <option value="masuk">Uang Masuk</option>
               <option value="keluar">Uang Keluar</option>
             </select>
           </div>
           <div>
-            <label className="text-sm text-white/70">Jumlah (Rp)</label>
+            <label className="label">Jumlah (Rp)</label>
             <input
               type="number"
               name="amount"
               required
               min={1}
               step="0.01"
-              className="w-full mt-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2"
+              className="input"
               placeholder="500000"
             />
           </div>
           <div>
-            <label className="text-sm text-white/70">Kategori</label>
+            <label className="label">Kategori</label>
             <input
               type="text"
               name="category"
-              className="w-full mt-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2"
+              className="input"
               placeholder="Simpanan / Pinjaman / Operasional"
             />
           </div>
           <div>
-            <label className="text-sm text-white/70">Keterangan</label>
+            <label className="label">Keterangan</label>
             <textarea
               name="description"
               required
-              className="w-full mt-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2"
+              className="input"
               rows={3}
               placeholder="Jelaskan tujuan transaksi ini"
             />
