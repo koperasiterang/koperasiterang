@@ -62,9 +62,11 @@ export default async function TransactionsPage() {
                 <StatusBadge status={tx.status} />
               </div>
             </div>
-            <div className="mt-2">
-              <FlagAnomalyButton transactionId={tx.id} />
-            </div>
+            {tx.created_by !== user?.id && (
+              <div className="mt-2">
+                <FlagAnomalyButton transactionId={tx.id} />
+              </div>
+            )}
           </div>
         ))}
         {(!transactions || transactions.length === 0) && (
