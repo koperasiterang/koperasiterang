@@ -47,7 +47,7 @@ export async function createTransaction(formData: FormData) {
 
   // Transaksi kecil (di bawah threshold) auto-approved supaya operasional harian tidak macet.
   if (!tx.approval_threshold_hit) {
-    await supabase.from("transactions").update({ status: "approved" }).eq("id", tx.id);
+    await supabase.rpc("set_transaction_status", { tx_id: tx.id, new_status: "approved" });;
     await supabase.from("audit_log").insert({
       transaction_id: tx.id,
       actor_id: profile!.id,
@@ -97,9 +97,9 @@ export async function submitApproval(transactionId: string, decision: "approve" 
   const rejectCount = allApprovals?.filter((a) => a.decision === "reject").length ?? 0;
 
   if (approveCount >= 2) {
-    await supabase.from("transactions").update({ status: "approved" }).eq("id", transactionId);
+    await supabase.rpc("set_transaction_status", { tx_id: transactionId, new_status: "approved" });
   } else if (rejectCount >= 2) {
-    await supabase.from("transactions").update({ status: "rejected" }).eq("id", transactionId);
+    await supabase.rpc("set_transaction_status", { tx_id: transactionId, new_status: "rejected" });
   }
 
   revalidatePath("/approvals");
