@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { flagAnomaly } from "@/lib/actions";
+import { cancelTransaction } from "@/lib/actions";
 
-export function FlagAnomalyButton({ transactionId }: { transactionId: string }) {
+export function CancelTransactionButton({ transactionId }: { transactionId: string }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -11,18 +11,21 @@ export function FlagAnomalyButton({ transactionId }: { transactionId: string }) 
 
   if (!open) {
     return (
-      <button onClick={() => setOpen(true)} className="text-xs font-medium text-kem-danger hover:underline">
-        ⚑ Tandai Anomali
+      <button onClick={() => setOpen(true)} className="text-xs font-medium text-kem-muted hover:text-kem-danger">
+        Batalkan transaksi
       </button>
     );
   }
 
   return (
     <div className="mt-1 space-y-2">
+      <p className="text-xs text-kem-muted">
+        Pembatalan tidak menghapus data — alasan Anda tercatat permanen di audit log.
+      </p>
       <textarea
         value={reason}
         onChange={(e) => setReason(e.target.value)}
-        placeholder="Kenapa transaksi ini mencurigakan?"
+        placeholder="Alasan pembatalan (wajib)"
         className="input text-sm"
         rows={2}
       />
@@ -34,21 +37,21 @@ export function FlagAnomalyButton({ transactionId }: { transactionId: string }) 
             setSubmitting(true);
             setError(null);
             try {
-              await flagAnomaly(transactionId, reason);
+              await cancelTransaction(transactionId, reason);
               setOpen(false);
               setReason("");
             } catch (e: any) {
-              setError(e?.message ?? "Gagal mengirim.");
+              setError(e?.message ?? "Gagal membatalkan.");
             } finally {
               setSubmitting(false);
             }
           }}
-          className="btn-primary text-xs px-3 py-1.5"
+          className="btn-danger text-xs px-3 py-1.5"
         >
-          {submitting ? "Mengirim…" : "Kirim"}
+          {submitting ? "Memproses…" : "Konfirmasi Batalkan"}
         </button>
         <button onClick={() => setOpen(false)} className="btn-secondary text-xs px-3 py-1.5">
-          Batal
+          Tutup
         </button>
       </div>
     </div>

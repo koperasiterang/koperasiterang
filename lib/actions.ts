@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { PENGURUS_ROLES, TX_CATEGORIES } from "@/lib/types";
 
-/** Revalidate semua halaman yang menampilkan status/saldo transaksi. */
+/** Revalidate semua halaman yang menampilkan status/saldo/antrian. */
 function revalidateAll() {
   revalidatePath("/dashboard");
   revalidatePath("/transactions");
@@ -26,11 +27,19 @@ export async function createTransaction(formData: FormData) {
     .single();
 
   if (profileError || !profile) throw new Error("Profil tidak ditemukan. Silakan login ulang.");
+  if (!PENGURUS_ROLES.includes(profile.role)) {
+    throw new Error("Hanya pengurus (ketua/bendahara/sekretaris) yang dapat mencatat transaksi.");
+  }
 
   const type = formData.get("type") as string;
   const amount = Number(formData.get("amount"));
-  const description = formData.get("description") as string;
+  const description = (formData.get("description") as string)?.trim();
   const category = formData.get("category") as string;
+
+  if (!["masuk", "keluar"].includes(type)) throw new Error("Jenis transaksi tidak valid.");
+  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Jumlah harus lebih dari 0.");
+  if (!description) throw new Error("Keterangan wajib diisi.");
+  if (!TX_CATEGORIES.includes(category as any)) throw new Error("Kategori tidak valid.");
 
   const { data: tx, error } = await supabase
     .from("transactions")
@@ -41,7 +50,6 @@ export async function createTransaction(formData: FormData) {
       description,
       category,
       created_by: profile.id,
-      // status default 'pending'; auto-approve di bawah threshold ditangani di bawah.
     })
     .select()
     .single();
@@ -61,10 +69,7 @@ export async function createTransaction(formData: FormData) {
       tx_id: tx.id,
       new_status: "approved",
     });
-    // Jangan gagal-diam: kalau RPC error, transaksi akan "nyangkut" pending -> laporkan.
-    if (rpcError) {
-      throw new Error(`Auto-approve gagal: ${rpcError.message}`);
-    }
+    if (rpcError) throw new Error(`Auto-approve gagal: ${rpcError.message}`);
 
     await supabase.from("audit_log").insert({
       transaction_id: tx.id,
@@ -90,15 +95,27 @@ export async function submitApproval(transactionId: string, decision: "approve" 
     .select("id, role")
     .eq("id", user!.id)
     .single();
-
   if (profileError || !profile) throw new Error("Profil tidak ditemukan. Silakan login ulang.");
+
+  // Separation of duties: penginput tidak boleh menyetujui transaksinya sendiri.
+  const { data: txRow } = await supabase
+    .from("transactions")
+    .select("created_by, status")
+    .eq("id", transactionId)
+    .single();
+  if (!txRow) throw new Error("Transaksi tidak ditemukan.");
+  if (txRow.created_by === profile.id) {
+    throw new Error("Anda mencatat transaksi ini, jadi tidak dapat menyetujuinya sendiri.");
+  }
+  if (txRow.status !== "pending") {
+    throw new Error("Transaksi ini sudah difinalisasi.");
+  }
 
   const { error: approvalError } = await supabase.from("approvals").insert({
     transaction_id: transactionId,
     approver_id: profile.id,
     decision,
   });
-  // Unique constraint (transaction_id, approver_id) mencegah vote ganda -> laporkan bila gagal.
   if (approvalError) throw new Error(`Gagal menyimpan suara: ${approvalError.message}`);
 
   await supabase.from("audit_log").insert({
@@ -108,7 +125,7 @@ export async function submitApproval(transactionId: string, decision: "approve" 
     note: `Keputusan multi-sig oleh ${profile.role}`,
   });
 
-  // Aturan 2-dari-3: cek total approve/reject, finalisasi status via RPC bila kuorum tercapai.
+  // Aturan 2-dari-3: finalisasi bila kuorum tercapai.
   const { data: allApprovals } = await supabase
     .from("approvals")
     .select("decision")
@@ -123,14 +140,43 @@ export async function submitApproval(transactionId: string, decision: "approve" 
       tx_id: transactionId,
       new_status: finalStatus,
     });
-    // Inilah penyebab bug utama sebelumnya: error RPC ditelan diam-diam sehingga
-    // status di DB tak pernah berubah. Sekarang dilaporkan secara eksplisit.
-    if (rpcError) {
-      throw new Error(`Finalisasi status (${finalStatus}) gagal: ${rpcError.message}`);
-    }
+    if (rpcError) throw new Error(`Finalisasi status (${finalStatus}) gagal: ${rpcError.message}`);
   }
 
-  // Revalidate SEMUA path terkait — sebelumnya /transactions tidak ikut di-revalidate.
+  revalidateAll();
+}
+
+export async function cancelTransaction(transactionId: string, reason: string) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const trimmed = reason?.trim();
+  if (!trimmed) throw new Error("Alasan pembatalan wajib diisi (tercatat permanen di audit log).");
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, role")
+    .eq("id", user!.id)
+    .single();
+  if (profileError || !profile) throw new Error("Profil tidak ditemukan. Silakan login ulang.");
+
+  const { error: rpcError } = await supabase.rpc("set_transaction_status", {
+    tx_id: transactionId,
+    new_status: "cancelled",
+  });
+  if (rpcError) throw new Error(`Pembatalan gagal: ${rpcError.message}`);
+
+  // Alasan pembatalan tercatat permanen di audit log sebagai bukti (setelah status berubah).
+  await supabase.from("audit_log").insert({
+    transaction_id: transactionId,
+    actor_id: profile.id,
+    action: "cancel",
+    note: `Dibatalkan oleh ${profile.role}: ${trimmed}`,
+  });
+
   revalidateAll();
 }
 
@@ -141,30 +187,47 @@ export async function flagAnomaly(transactionId: string, reason: string) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const trimmed = reason?.trim();
+  if (!trimmed) throw new Error("Alasan wajib diisi.");
+
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id")
     .eq("id", user!.id)
     .single();
-
   if (profileError || !profile) throw new Error("Profil tidak ditemukan. Silakan login ulang.");
 
   const { error: flagError } = await supabase.from("anomaly_flags").insert({
     transaction_id: transactionId,
     flagged_by: profile.id,
     source: "anggota",
-    reason,
+    reason: trimmed,
   });
+  // RLS akan menolak jika mencoba menandai transaksi sendiri → pesan jelas.
   if (flagError) throw new Error(`Gagal menandai anomali: ${flagError.message}`);
 
   await supabase.from("audit_log").insert({
     transaction_id: transactionId,
     actor_id: profile.id,
     action: "flag_anomaly",
-    note: reason,
+    note: trimmed,
   });
 
-  revalidatePath("/anomalies");
-  revalidatePath("/transactions");
-  revalidatePath("/dashboard");
+  revalidateAll();
+}
+
+export async function reviewAnomaly(flagId: string, action: "cancel_tx" | "dismiss") {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { error: rpcError } = await supabase.rpc("review_anomaly", {
+    flag_id: flagId,
+    action,
+  });
+  if (rpcError) throw new Error(`Peninjauan anomali gagal: ${rpcError.message}`);
+
+  revalidateAll();
 }

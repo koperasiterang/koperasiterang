@@ -1,4 +1,6 @@
 import { createTransaction } from "@/lib/actions";
+import { AmountInput } from "@/components/AmountInput";
+import { CategorySelect } from "@/components/CategorySelect";
 import Link from "next/link";
 
 export default function NewTransactionPage() {
@@ -8,11 +10,11 @@ export default function NewTransactionPage() {
         ← Kembali ke transaksi
       </Link>
       <div className="card">
-        <p className="eyebrow mb-2">Input Transaksi</p>
-        <h1 className="text-xl font-display mb-1">Catat Transaksi</h1>
-        <p className="text-sm text-terang-muted mb-5">
-          Transaksi di atas Rp 5.000.000 otomatis masuk antrian persetujuan multi-signature. Di
-          bawah itu langsung disetujui agar operasional harian tidak macet.
+        <p className="eyebrow mb-1.5">Input Transaksi</p>
+        <h1 className="text-xl font-extrabold mb-1">Catat Transaksi</h1>
+        <p className="text-sm text-kem-muted mb-5">
+          Transaksi di atas Rp 5.000.000 otomatis masuk antrian persetujuan multi-signature (butuh 2
+          dari 3 pihak yang bukan penginput). Di bawah itu langsung disetujui.
         </p>
 
         <form action={createTransaction} className="space-y-4">
@@ -24,25 +26,12 @@ export default function NewTransactionPage() {
             </select>
           </div>
           <div>
-            <label className="label">Jumlah (Rp)</label>
-            <input
-              type="number"
-              name="amount"
-              required
-              min={1}
-              step="0.01"
-              className="input"
-              placeholder="500000"
-            />
+            <label className="label">Jumlah</label>
+            <AmountInput />
           </div>
           <div>
             <label className="label">Kategori</label>
-            <input
-              type="text"
-              name="category"
-              className="input"
-              placeholder="Simpanan / Pinjaman / Operasional"
-            />
+            <CategorySelect />
           </div>
           <div>
             <label className="label">Keterangan</label>

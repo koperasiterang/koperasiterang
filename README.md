@@ -68,12 +68,18 @@ npm install
    npx supabase db push
    # atau paste berurutan ke SQL Editor Supabase:
    #   supabase/migrations/0001_schema.sql      (tabel, RLS, view saldo)
-   #   supabase/migrations/0003_functions.sql   (RPC set_transaction_status — WAJIB)
+   #   supabase/migrations/0004_governance.sql  (RPC + tata kelola v2 — WAJIB)
+   #
+   # Catatan: 0004 sudah mencakup & menyempurnakan 0003 (RPC set_transaction_status),
+   # jadi untuk DB baru cukup jalankan 0001 lalu 0004. Kalau DB lama Anda sudah
+   # menjalankan 0003, cukup jalankan 0004 saja untuk meng-upgrade.
    ```
-   > **Penting:** `0003_functions.sql` membuat RPC `set_transaction_status`
-   > (SECURITY DEFINER + `grant execute ... to authenticated`). Tanpa migrasi ini,
-   > perubahan status (pending → approved/rejected) gagal diam-diam karena tabel
-   > `transactions` sengaja tidak punya policy UPDATE (immutability by omission).
+   > **Penting:** `0004_governance.sql` membuat RPC `set_transaction_status` &
+   > `review_anomaly` (SECURITY DEFINER + `grant execute ... to authenticated`),
+   > menambah peran `sekretaris`, status `cancelled`, dan kebijakan separation of
+   > duties (penginput tidak bisa menyetujui / menandai anomali transaksinya sendiri).
+   > Tanpa migrasi ini, perubahan status gagal diam-diam karena tabel `transactions`
+   > sengaja tidak punya policy UPDATE (immutability by omission).
 2b. Aktifkan Realtime agar dashboard update tanpa refresh:
    Supabase Dashboard → Database → Replication → publication `supabase_realtime`,
    centang tabel `transactions`, `approvals`, dan `anomaly_flags`.
@@ -83,8 +89,10 @@ npm install
    npx supabase functions deploy anomaly-detect
    npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-xxxxx
    ```
-4. Buat user demo lewat Supabase Dashboard → Authentication → Add User
-   (buat 3-4 akun: ketua, bendahara, anggota, dan satu untuk juri dengan role `dinas`)
+4. Buat user demo lewat Supabase Dashboard → Authentication → Add User.
+   Untuk mendemokan multi-sig separation of duties, buat minimal 5 akun:
+   `ketua`, `bendahara`, `sekretaris` (pengurus), `pengawas`, `anggota`,
+   dan opsional satu `dinas` untuk juri.
 5. Isi `supabase/migrations/0002_seed_template.sql` dengan UUID user yang baru
    dibuat, lalu jalankan di SQL Editor.
 
@@ -106,8 +114,16 @@ Buka `http://localhost:3000` — akan redirect ke halaman login.
 _Isi setelah seed data dibuat:_
 - Ketua: `ketua@demo.koperasiterang.id` / `[password]`
 - Bendahara: `bendahara@demo.koperasiterang.id` / `[password]`
+- Sekretaris: `sekretaris@demo.koperasiterang.id` / `[password]`
+- Pengawas: `pengawas@demo.koperasiterang.id` / `[password]`
 - Anggota: `anggota@demo.koperasiterang.id` / `[password]`
 - Peninjau (role dinas): `juri@demo.koperasiterang.id` / `[password]`
+
+**Alur demo separation of duties:** login sebagai *bendahara* → catat pengeluaran
+> Rp 5.000.000 (masuk antrian). Lalu *ketua* + *sekretaris* (atau *pengawas*)
+menyetujui — bendahara sebagai penginput sengaja tidak bisa ikut menyetujui.
+Setelah 2 setuju, transaksi otomatis "Disetujui", hilang dari antrian, dan saldo
+dashboard ter-update.
 
 ## Skalabilitas & Dampak
 

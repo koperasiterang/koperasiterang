@@ -1,4 +1,25 @@
-export type UserRole = "ketua" | "bendahara" | "anggota" | "pengawas" | "dinas";
+export type UserRole = "ketua" | "bendahara" | "sekretaris" | "anggota" | "pengawas" | "dinas";
+
+export type TxStatus = "pending" | "approved" | "rejected" | "cancelled";
+
+/** Peran pengurus yang boleh MENGINPUT transaksi. */
+export const PENGURUS_ROLES: UserRole[] = ["ketua", "bendahara", "sekretaris"];
+
+/** Peran yang boleh MENYETUJUI (multi-sig) — tetap dibatasi "bukan penginput" di server. */
+export const APPROVER_ROLES: UserRole[] = ["ketua", "bendahara", "sekretaris", "pengawas"];
+
+/** Kategori transaksi baku, untuk konsistensi data & rekap dashboard. */
+export const TX_CATEGORIES = ["Simpanan", "Pinjaman", "Operasional"] as const;
+export type TxCategory = (typeof TX_CATEGORIES)[number];
+
+export const ROLE_LABEL: Record<UserRole, string> = {
+  ketua: "Ketua",
+  bendahara: "Bendahara",
+  sekretaris: "Sekretaris",
+  pengawas: "Pengawas",
+  anggota: "Anggota",
+  dinas: "Dinas Koperasi",
+};
 
 export type Profile = {
   id: string;
@@ -17,7 +38,7 @@ export type Transaction = {
   created_by: string;
   correction_of: string | null;
   correction_reason: string | null;
-  status: "pending" | "approved" | "rejected";
+  status: TxStatus;
   approval_threshold_hit: boolean;
   created_at: string;
   batch_hash: string | null;
@@ -48,4 +69,9 @@ export function formatIDR(amount: number): string {
     currency: "IDR",
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+/** Pemisah ribuan tanpa simbol mata uang, mis. 5000000 -> "5.000.000". */
+export function formatNumberID(amount: number): string {
+  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(amount);
 }
