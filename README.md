@@ -121,22 +121,41 @@ _Isi setelah seed data dibuat:_
 
 **Alur demo separation of duties:** login sebagai *bendahara* → catat pengeluaran
 > Rp 5.000.000 (masuk antrian). Lalu *ketua* + *sekretaris* (atau *pengawas*)
-menyetujui — bendahara sebagai penginput sengaja tidak bisa ikut menyetujui.
+menyetujui, bendahara sebagai penginput sengaja tidak bisa ikut menyetujui.
 Setelah 2 setuju, transaksi otomatis "Disetujui", hilang dari antrian, dan saldo
 dashboard ter-update.
 
 ## Skalabilitas & Dampak
 
 Target pembeli utama adalah **Dinas Koperasi Kabupaten/Kota**, bukan koperasi
-individual — mereka bisa memantau kesehatan seluruh koperasi binaan dalam satu
+individual. Mereka bisa memantau kesehatan seluruh koperasi binaan dalam satu
 dashboard (role `dinas` sudah punya akses lintas-koperasi via RLS policy). Model
 ini bisa diintegrasikan sebagai modul tambahan di atas SIMKOPDES yang sudah ada,
 tanpa menggantikan sistem eksisting.
 
 ## Deklarasi Penggunaan AI (sesuai Aturan Penggunaan AI/IP TOR)
 
-Proyek ini menggunakan AI generatif (Claude) sebagai alat bantu teknis untuk:
-penulisan kode, debugging, dan penyusunan dokumentasi. Analisis masalah,
-keputusan arsitektur (pemilihan skema RLS, mekanisme threshold multi-sig,
-kombinasi watchdog manual+AI), dan ide inti produk merupakan hasil pemikiran
-tim.
+Kami terbuka soal ini. Ide, konsep, dan seluruh keputusan tata kelola Koperasi
+Terang murni hasil pemikiran tim, bukan dihasilkan oleh AI. Yang kami putuskan
+sendiri antara lain:
+
+- Konsep inti "transparansi radikal" dan tiga pilar: audit trail immutable,
+  persetujuan bersama (multi-signature), dan anggota sebagai watchdog.
+- Aturan tata kelola: hanya ketua dan bendahara yang boleh mencatat, penginput
+  tidak boleh menyetujui transaksinya sendiri, satu penolakan langsung
+  membatalkan, uang masuk tidak butuh persetujuan tetapi yang besar ditandai
+  untuk ditinjau pengawas, dan pembatalan tetap terekam di audit log.
+- Model bisnis: pembeli utamanya Dinas Koperasi Kabupaten/Kota, bukan koperasi
+  satu per satu.
+
+AI generatif (Claude) kami pakai sebagai alat bantu teknis saja, sesuai yang
+diizinkan TOR, yaitu untuk:
+
+- Menulis dan merapikan kode (Next.js, SQL/RLS Supabase, komponen UI).
+- Debugging, misalnya memperbaiki bug status persetujuan dan kegagalan build.
+- Menyusun dokumentasi teknis seperti README ini.
+
+Setiap keluaran AI kami tinjau, uji, dan sesuaikan dengan kebutuhan koperasi desa.
+Tidak ada gagasan inti yang kami ambil mentah-mentah dari AI. Kami siap
+mempertanggungjawabkan seluruh keputusan desain pada sesi tanya jawab dan live
+defense.
