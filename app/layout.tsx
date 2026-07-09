@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { NavBar } from "@/components/NavBar";
+import type { UserRole } from "@/lib/types";
+
+// Root layout membaca cookie/sesi (dinamis). Tandai force-dynamic agar Next tidak
+// mencoba prerender statis (yang gagal karena penggunaan cookies() di build).
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Koperasi Terang — Transparansi Radikal untuk Koperasi Desa",
@@ -19,7 +24,7 @@ export default async function RootLayout({
     data: { user },
   } = await supabase.auth.getUser();
 
-  let profile: { full_name: string; role: string; koperasi: { nama: string; wilayah: string } | null } | null =
+  let profile: { full_name: string; role: UserRole; koperasi: { nama: string; wilayah: string } | null } | null =
     null;
 
   if (user) {
