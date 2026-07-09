@@ -3,7 +3,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatIDR, PENGURUS_ROLES, TX_CATEGORIES, type UserRole } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
-import { RealtimeRefresher } from "@/components/RealtimeRefresher";
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -72,13 +71,11 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-fade-in-up">
-      <RealtimeRefresher koperasiId={profile?.koperasi_id} />
-
       <header>
         <p className="eyebrow mb-1.5">Dashboard Transparansi</p>
         <h1 className="text-3xl font-extrabold">{kop?.nama ?? "Koperasi Terang"}</h1>
         <p className="text-kem-muted mt-1">
-          {kop?.wilayah ? `${kop.wilayah} · ` : ""}Semua angka di sini terlihat oleh setiap anggota —
+          {kop?.wilayah ? `${kop.wilayah} · ` : ""}Semua angka di sini terlihat oleh setiap anggota,
           bukan hanya pengurus.
         </p>
       </header>

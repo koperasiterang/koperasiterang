@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { formatIDR, type UserRole } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { AnomalyReviewButtons } from "@/components/AnomalyReviewButtons";
-import { RealtimeRefresher } from "@/components/RealtimeRefresher";
 
 export default async function AnomaliesPage() {
   const supabase = createClient();
@@ -28,14 +27,13 @@ export default async function AnomaliesPage() {
 
   return (
     <div className="space-y-5 animate-fade-in-up">
-      <RealtimeRefresher />
-
       <header>
         <p className="eyebrow mb-1.5">Watchdog Dashboard</p>
-        <h1 className="text-2xl font-extrabold">Deteksi Anomali</h1>
+        <h1 className="text-2xl font-extrabold">Watchdog & Tinjauan</h1>
         <p className="text-kem-muted mt-1 text-sm max-w-2xl">
-          Anomali ditandai oleh anggota (bukan penginput transaksi itu sendiri) atau otomatis oleh AI.
-          Pengawas menindaklanjuti atau menutupnya — begitu ditinjau, anomali keluar dari antrian.
+          Ditandai oleh anggota (bukan penginput transaksinya sendiri), otomatis oleh AI, atau oleh
+          sistem (mis. pemasukan besar). Pengawas menindaklanjuti atau menutupnya, begitu ditinjau
+          item keluar dari antrian.
           {openCount > 0 ? ` Saat ini ${openCount} menunggu peninjauan.` : ""}
         </p>
       </header>
@@ -65,10 +63,16 @@ export default async function AnomaliesPage() {
                 className={
                   f.source === "ai"
                     ? "badge bg-kem-tealSoft text-kem-teal shrink-0"
+                    : f.source === "sistem"
+                    ? "badge bg-kem-amberSoft text-kem-amber shrink-0"
                     : "badge bg-kem-dangerSoft text-kem-danger shrink-0"
                 }
               >
-                {f.source === "ai" ? "✦ Terdeteksi AI" : "⚑ Anggota"}
+                {f.source === "ai"
+                  ? "✦ Terdeteksi AI"
+                  : f.source === "sistem"
+                  ? "◔ Tinjauan Sistem"
+                  : "⚑ Dilaporkan Anggota"}
               </span>
             </div>
 

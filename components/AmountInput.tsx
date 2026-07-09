@@ -6,10 +6,16 @@ import { formatNumberID } from "@/lib/types";
 /**
  * Input jumlah dengan pemisah ribuan (mis. "5.000.000") untuk keterbacaan,
  * namun mengirim angka mentah lewat hidden input `name` ke server action.
+ * Hint persetujuan hanya muncul untuk UANG KELUAR (uang masuk tidak butuh approval).
  */
-export function AmountInput({ name = "amount" }: { name?: string }) {
+export function AmountInput({
+  name = "amount",
+  type,
+}: {
+  name?: string;
+  type?: "masuk" | "keluar";
+}) {
   const [raw, setRaw] = useState<number | "">("");
-
   const display = raw === "" ? "" : formatNumberID(raw);
 
   return (
@@ -28,11 +34,17 @@ export function AmountInput({ name = "amount" }: { name?: string }) {
           aria-label="Jumlah rupiah"
         />
       </div>
-      {/* nilai mentah yang benar-benar dikirim */}
       <input type="hidden" name={name} value={raw === "" ? "" : String(raw)} />
-      {raw !== "" && raw > 5000000 && (
+      {type === "keluar" && raw !== "" && raw > 5000000 && (
         <p className="text-xs text-kem-amber mt-1.5">
-          Di atas Rp 5.000.000 — akan masuk antrian persetujuan multi-signature (2 dari 3).
+          Pengeluaran di atas Rp 5.000.000 akan masuk antrian persetujuan bersama (butuh 2 dari 3 pihak
+          yang bukan penginput).
+        </p>
+      )}
+      {type === "masuk" && raw !== "" && raw > 5000000 && (
+        <p className="text-xs text-kem-muted mt-1.5">
+          Pemasukan langsung tercatat, namun akan ditandai untuk ditinjau pengawas (memastikan asal dana
+          jelas).
         </p>
       )}
     </div>

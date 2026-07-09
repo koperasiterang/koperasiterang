@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import { NavBar } from "@/components/NavBar";
+import { RealtimeNotifier } from "@/components/RealtimeNotifier";
 import type { UserRole } from "@/lib/types";
 
 // Root layout membaca cookie/sesi (dinamis). Tandai force-dynamic agar Next tidak
@@ -45,9 +46,17 @@ export default async function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
+        {/* Terapkan preferensi "ramah lansia" sebelum render agar tidak berkedip. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(localStorage.getItem('kt-senior')==='1'){document.documentElement.classList.add('senior')}}catch(e){}",
+          }}
+        />
       </head>
       <body className="min-h-screen">
         {profile && <NavBar profile={profile} />}
+        {profile && <RealtimeNotifier />}
         <main className={profile ? "max-w-5xl mx-auto px-4 py-8" : ""}>{children}</main>
       </body>
     </html>

@@ -50,6 +50,10 @@ kebiasaan, kategori/deskripsi tidak wajar, atau frekuensi tidak biasa untuk kate
 
 Jawab HANYA dalam format JSON tanpa teks lain: {"is_anomaly": boolean, "reason": "penjelasan singkat dalam Bahasa Indonesia, maks 2 kalimat"}`;
 
+    // Nama model dibuat konfigurabel lewat env var ANTHROPIC_MODEL agar mudah disesuaikan
+    // dengan model yang tersedia di akun Anda tanpa mengubah kode. Default: Claude Sonnet.
+    const model = Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-4-6";
+
     const claudeResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -58,11 +62,22 @@ Jawab HANYA dalam format JSON tanpa teks lain: {"is_anomaly": boolean, "reason":
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model,
         max_tokens: 300,
         messages: [{ role: "user", content: prompt }],
       }),
     });
+
+    // Jangan gagal diam-diam: kalau API menolak (mis. nama model salah), catat ke log fungsi
+    // supaya ketahuan, bukan sekadar dianggap "bukan anomali".
+    if (!claudeResponse.ok) {
+      const errText = await claudeResponse.text();
+      console.error(`Anthropic API error ${claudeResponse.status} (model=${model}): ${errText}`);
+      return new Response(
+        JSON.stringify({ error: "Analisis AI gagal", status: claudeResponse.status }),
+        { status: 502, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     const claudeData = await claudeResponse.json();
     const textBlock = claudeData.content?.find((c: any) => c.type === "text")?.text ?? "{}";

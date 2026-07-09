@@ -2,15 +2,45 @@ export type UserRole = "ketua" | "bendahara" | "sekretaris" | "anggota" | "penga
 
 export type TxStatus = "pending" | "approved" | "rejected" | "cancelled";
 
-/** Peran pengurus yang boleh MENGINPUT transaksi. */
-export const PENGURUS_ROLES: UserRole[] = ["ketua", "bendahara", "sekretaris"];
+/** Peran yang boleh MENGINPUT transaksi (pencatat kas). Sekretaris & pengawas sengaja
+ *  TIDAK bisa mencatat, agar mereka jadi penyetuju independen (tanpa konflik kepentingan). */
+export const PENGURUS_ROLES: UserRole[] = ["ketua", "bendahara"];
 
-/** Peran yang boleh MENYETUJUI (multi-sig) — tetap dibatasi "bukan penginput" di server. */
+/** Peran yang boleh MENYETUJUI (multi-sig), tetap dibatasi "bukan penginput" di server. */
 export const APPROVER_ROLES: UserRole[] = ["ketua", "bendahara", "sekretaris", "pengawas"];
 
-/** Kategori transaksi baku, untuk konsistensi data & rekap dashboard. */
+/** Kategori transaksi baku (nilai yang disimpan), untuk konsistensi data & rekap dashboard. */
 export const TX_CATEGORIES = ["Simpanan", "Pinjaman", "Operasional"] as const;
 export type TxCategory = (typeof TX_CATEGORIES)[number];
+
+/** Label kategori yang tampil di form, menyesuaikan arah transaksi agar tidak membingungkan.
+ *  Nilai yang DISIMPAN tetap "Simpanan" / "Pinjaman" / "Operasional". */
+export const CATEGORY_LABELS: Record<"masuk" | "keluar", Record<TxCategory, string>> = {
+  masuk: {
+    Simpanan: "Simpanan (Setoran Anggota)",
+    Pinjaman: "Pinjaman (Angsuran/Cicilan Masuk)",
+    Operasional: "Operasional (Pendapatan Usaha)",
+  },
+  keluar: {
+    Simpanan: "Simpanan (Penarikan Anggota)",
+    Pinjaman: "Pinjaman (Pencairan ke Anggota)",
+    Operasional: "Operasional (Belanja/Biaya)",
+  },
+};
+
+/** Teks bantuan kontekstual di bawah dropdown kategori. */
+export const CATEGORY_HELP: Record<"masuk" | "keluar", Record<TxCategory, string>> = {
+  masuk: {
+    Simpanan: "Anggota menyetor simpanan atau tabungan ke koperasi.",
+    Pinjaman: "Anggota membayar cicilan atau angsuran pinjamannya.",
+    Operasional: "Pendapatan dari unit usaha koperasi, misalnya hasil penjualan.",
+  },
+  keluar: {
+    Simpanan: "Anggota menarik kembali sebagian atau seluruh simpanannya.",
+    Pinjaman: "Koperasi mencairkan pinjaman baru kepada anggota.",
+    Operasional: "Belanja atau biaya operasional koperasi.",
+  },
+};
 
 export const ROLE_LABEL: Record<UserRole, string> = {
   ketua: "Ketua",
@@ -56,7 +86,7 @@ export type AnomalyFlag = {
   id: string;
   transaction_id: string;
   flagged_by: string | null;
-  source: "anggota" | "ai";
+  source: "anggota" | "ai" | "sistem";
   reason: string;
   reviewed: boolean;
   reviewed_by: string | null;

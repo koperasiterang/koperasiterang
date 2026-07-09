@@ -4,7 +4,6 @@ import { formatIDR, APPROVER_ROLES, type UserRole } from "@/lib/types";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FlagAnomalyButton } from "@/components/FlagAnomalyButton";
 import { CancelTransactionButton } from "@/components/CancelTransactionButton";
-import { RealtimeRefresher } from "@/components/RealtimeRefresher";
 
 export default async function TransactionsPage() {
   const supabase = createClient();
@@ -29,13 +28,11 @@ export default async function TransactionsPage() {
 
   return (
     <div className="space-y-5 animate-fade-in-up">
-      <RealtimeRefresher koperasiId={profile?.koperasi_id} />
-
       <header>
         <p className="eyebrow mb-1.5">Audit Trail Immutable</p>
         <h1 className="text-2xl font-extrabold">Semua Transaksi</h1>
         <p className="text-kem-muted mt-1 text-sm max-w-2xl">
-          Setiap transaksi tercatat permanen. Pembatalan pun tidak menghapus data — statusnya berubah
+          Setiap transaksi tercatat permanen. Pembatalan pun tidak menghapus data, statusnya berubah
           jadi &ldquo;Dibatalkan&rdquo; dan alasannya tercatat di audit log. Tiap baris dirantai dengan
           hash SHA-256 sehingga perubahan sekecil apa pun terdeteksi.
         </p>
@@ -62,7 +59,7 @@ export default async function TransactionsPage() {
                     <p className="font-semibold text-kem-ink">{tx.description}</p>
                     <p className="text-xs text-kem-muted mt-1">
                       {new Date(tx.created_at).toLocaleString("id-ID")} · dicatat oleh{" "}
-                      {tx.profiles?.full_name ?? "—"} · {tx.category ?? "tanpa kategori"}
+                      {tx.profiles?.full_name ?? "-"} · {tx.category ?? "tanpa kategori"}
                     </p>
                     {tx.batch_hash && (
                       <p className="text-[11px] text-kem-muted/80 mt-2 font-mono flex items-center gap-1">

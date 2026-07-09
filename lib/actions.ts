@@ -28,7 +28,7 @@ export async function createTransaction(formData: FormData) {
 
   if (profileError || !profile) throw new Error("Profil tidak ditemukan. Silakan login ulang.");
   if (!PENGURUS_ROLES.includes(profile.role)) {
-    throw new Error("Hanya pengurus (ketua/bendahara/sekretaris) yang dapat mencatat transaksi.");
+    throw new Error("Hanya ketua atau bendahara yang dapat mencatat transaksi.");
   }
 
   const type = formData.get("type") as string;
@@ -63,7 +63,8 @@ export async function createTransaction(formData: FormData) {
     note: `Transaksi dicatat oleh ${profile.role}`,
   });
 
-  // Transaksi kecil (di bawah threshold) auto-approved supaya operasional harian tidak macet.
+  // Yang butuh persetujuan hanya UANG KELUAR di atas Rp 5.000.000 (approval_threshold_hit).
+  // Selain itu (semua uang masuk, dan uang keluar kecil) langsung disetujui agar tidak macet.
   if (!tx.approval_threshold_hit) {
     const { error: rpcError } = await supabase.rpc("set_transaction_status", {
       tx_id: tx.id,
@@ -75,8 +76,14 @@ export async function createTransaction(formData: FormData) {
       transaction_id: tx.id,
       actor_id: profile.id,
       action: "approve",
-      note: "Auto-approved: di bawah ambang batas multi-signature",
+      note: "Disetujui otomatis (tidak wajib multi-signature)",
     });
+
+    // Pemasukan besar tidak butuh approval, TAPI ditandai untuk tinjauan pasif pengawas
+    // (memastikan asal dananya jelas). Bersifat catatan, bukan pemblokir.
+    if (tx.type === "masuk" && tx.amount > 5000000) {
+      await supabase.rpc("flag_income_review", { tx_id: tx.id });
+    }
   }
 
   revalidateAll();
@@ -125,17 +132,25 @@ export async function submitApproval(transactionId: string, decision: "approve" 
     note: `Keputusan multi-sig oleh ${profile.role}`,
   });
 
-  // Aturan 2-dari-3: finalisasi bila kuorum tercapai.
+  // Aturan finalisasi:
+  //  - SATU penolakan langsung membatalkan (ditolak). Suara pengawas tidak bisa di-override
+  //    oleh mayoritas pengurus. Kalau pengurus merasa keliru, harus input ulang dengan koreksi.
+  //  - Butuh 2 persetujuan untuk lolos (2 dari 3 pihak yang bukan penginput).
   const { data: allApprovals } = await supabase
     .from("approvals")
     .select("decision")
     .eq("transaction_id", transactionId);
 
   const approveCount = allApprovals?.filter((a) => a.decision === "approve").length ?? 0;
-  const rejectCount = allApprovals?.filter((a) => a.decision === "reject").length ?? 0;
 
-  if (approveCount >= 2 || rejectCount >= 2) {
-    const finalStatus = approveCount >= 2 ? "approved" : "rejected";
+  let finalStatus: "approved" | "rejected" | null = null;
+  if (decision === "reject") {
+    finalStatus = "rejected"; // 1 tolak = langsung ditolak
+  } else if (approveCount >= 2) {
+    finalStatus = "approved";
+  }
+
+  if (finalStatus) {
     const { error: rpcError } = await supabase.rpc("set_transaction_status", {
       tx_id: transactionId,
       new_status: finalStatus,
@@ -229,5 +244,25 @@ export async function reviewAnomaly(flagId: string, action: "cancel_tx" | "dismi
   });
   if (rpcError) throw new Error(`Peninjauan anomali gagal: ${rpcError.message}`);
 
+  revalidateAll();
+}
+
+export async function updateMyName(formData: FormData) {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const newName = ((formData.get("full_name") as string) ?? "").trim();
+  if (newName.length < 2) throw new Error("Nama minimal 2 karakter.");
+
+  // RPC hanya menyentuh kolom full_name milik diri sendiri (kolom role/koperasi aman).
+  const { error } = await supabase.rpc("update_my_name", { new_name: newName });
+  if (error) throw new Error(`Gagal memperbarui nama: ${error.message}`);
+
+  // Nama tampil di banyak tempat (NavBar, "dicatat oleh", dst) yang membaca satu tabel yang sama,
+  // jadi revalidate layout + halaman terkait agar semuanya ikut ter-update.
+  revalidatePath("/", "layout");
   revalidateAll();
 }

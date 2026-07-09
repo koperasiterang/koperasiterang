@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { ROLE_LABEL, PENGURUS_ROLES, type UserRole } from "@/lib/types";
 import { BrandMark } from "@/components/BrandMark";
+import { AccessibilityToggle } from "@/components/AccessibilityToggle";
+import { SignOutButton } from "@/components/SignOutButton";
 
 type Props = {
   profile: {
@@ -54,23 +56,24 @@ export function NavBar({ profile }: Props) {
             })}
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {isPengurus && (
               <Link href="/transactions/new" className="btn-primary hidden sm:inline-flex text-sm px-3 py-1.5">
                 + Catat
               </Link>
             )}
-            <div className="hidden sm:flex flex-col items-end leading-tight">
-              <span className="text-sm font-semibold text-kem-ink">{profile.full_name}</span>
+            <AccessibilityToggle />
+            <Link href="/profile" className="hidden sm:flex flex-col items-end leading-tight group">
+              <span className="text-sm font-semibold text-kem-ink group-hover:text-kem-teal transition-colors">
+                {profile.full_name}
+              </span>
               <span className="text-[11px] text-kem-teal font-semibold uppercase tracking-wide">
                 {ROLE_LABEL[profile.role] ?? profile.role}
               </span>
+            </Link>
+            <div className="hidden sm:block">
+              <SignOutButton />
             </div>
-            <form action="/auth/signout" method="post" className="hidden sm:block">
-              <button className="btn-ghost text-sm" title="Keluar">
-                Keluar
-              </button>
-            </form>
 
             <button
               onClick={() => setOpen((v) => !v)}
@@ -93,7 +96,7 @@ export function NavBar({ profile }: Props) {
                   key={item.href}
                   href={item.href}
                   onClick={() => setOpen(false)}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium ${
+                  className={`px-3 py-2 rounded-lg text-base font-medium ${
                     active ? "text-kem-teal bg-kem-tealSoft" : "text-kem-muted hover:bg-kem-bg"
                   }`}
                 >
@@ -101,17 +104,22 @@ export function NavBar({ profile }: Props) {
                 </Link>
               );
             })}
+            <Link
+              href="/profile"
+              onClick={() => setOpen(false)}
+              className="px-3 py-2 rounded-lg text-base font-medium text-kem-muted hover:bg-kem-bg"
+            >
+              Profil Saya
+            </Link>
             <div className="mt-2 flex items-center justify-between border-t border-kem-border pt-3">
               <div className="flex flex-col leading-tight">
                 <span className="text-sm font-semibold text-kem-ink">{profile.full_name}</span>
                 <span className="text-[11px] text-kem-teal font-semibold uppercase">
                   {ROLE_LABEL[profile.role] ?? profile.role}
-                  {profile.koperasi ? ` · ${profile.koperasi.nama}` : ""}
+                  {profile.koperasi ? `, ${profile.koperasi.nama}` : ""}
                 </span>
               </div>
-              <form action="/auth/signout" method="post">
-                <button className="btn-secondary text-sm py-1.5">Keluar</button>
-              </form>
+              <SignOutButton variant="secondary" />
             </div>
             {isPengurus && (
               <Link href="/transactions/new" onClick={() => setOpen(false)} className="btn-primary mt-2 w-full">

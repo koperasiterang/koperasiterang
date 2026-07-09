@@ -77,4 +77,20 @@
     background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
     animation: shimmer 1.5s infinite;
   }
+
+  /* Toast notifikasi realtime (bertingkat, hanya event penting) */
+  .toast-wrap {
+    @apply fixed z-[60] bottom-4 right-4 left-4 sm:left-auto sm:w-80 flex flex-col gap-2 pointer-events-none;
+  }
+  .toast {
+    @apply pointer-events-auto rounded-xl border border-kem-border bg-white shadow-card px-4 py-3 text-sm animate-fade-in-up;
+  }
+}
+
+/* Mode ramah lansia: skala seluruh UI naik (font & jarak berbasis rem ikut membesar). */
+html.senior {
+  font-size: 118%;
+}
+html.senior body {
+  line-height: 1.65;
 }
