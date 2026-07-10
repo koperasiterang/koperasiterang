@@ -148,14 +148,23 @@ sendiri antara lain:
 - Model bisnis: pembeli utamanya Dinas Koperasi Kabupaten/Kota, bukan koperasi
   satu per satu.
 
-AI generatif (Claude) kami pakai sebagai alat bantu teknis saja, sesuai yang
-diizinkan TOR, yaitu untuk:
+Kami memakai beberapa alat bantu AI, sesuai yang diizinkan TOR, dengan peran
+masing-masing yang kami sebutkan secara terbuka:
 
-- Menulis dan merapikan kode (Next.js, SQL/RLS Supabase, komponen UI).
-- Debugging, misalnya memperbaiki bug status persetujuan dan kegagalan build.
-- Menyusun dokumentasi teknis seperti README ini.
+- **Kiro AI** (agen pemrograman berbantuan AI): tempat sebagian besar kode
+  ditulis, di-debug, dan di-deploy. Riwayat commit di repositori ini
+  memperlihatkan proses membangun bersama tersebut secara transparan.
+- **Claude (Anthropic)**: model yang menggerakkan agen pemrograman di atas,
+  sekaligus dipakai sebagai mesin deteksi anomali di dalam aplikasi (edge
+  function `anomaly-detect`).
+- **Gemini (Google)**: dipakai untuk diskusi, review, dan kritik, misalnya
+  menemukan isu kualitas data demo dan kejanggalan saldo.
 
-Setiap keluaran AI kami tinjau, uji, dan sesuaikan dengan kebutuhan koperasi desa.
-Tidak ada gagasan inti yang kami ambil mentah-mentah dari AI. Kami siap
+Cakupan bantuan AI: menulis dan merapikan kode (Next.js, SQL/RLS Supabase,
+komponen UI), debugging (mis. memperbaiki bug status persetujuan dan kegagalan
+build), penyusunan dokumentasi teknis, serta diskusi dan pengujian ide.
+
+Setiap keluaran AI kami tinjau, uji, dan sesuaikan dengan kebutuhan koperasi
+desa. Tidak ada gagasan inti yang kami ambil mentah-mentah dari AI. Kami siap
 mempertanggungjawabkan seluruh keputusan desain pada sesi tanya jawab dan live
 defense.

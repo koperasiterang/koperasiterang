@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { PENGURUS_ROLES, TX_CATEGORIES } from "@/lib/types";
+import { PENGURUS_ROLES, TX_CATEGORIES, formatIDR } from "@/lib/types";
 
 /** Revalidate semua halaman yang menampilkan status/saldo/antrian. */
 function revalidateAll() {
@@ -40,6 +40,22 @@ export async function createTransaction(formData: FormData) {
   if (!Number.isFinite(amount) || amount <= 0) throw new Error("Jumlah harus lebih dari 0.");
   if (!description) throw new Error("Keterangan wajib diisi.");
   if (!TX_CATEGORIES.includes(category as any)) throw new Error("Kategori tidak valid.");
+
+  // Guard saldo: koperasi tidak bisa mengeluarkan lebih dari kas yang tersedia.
+  // Dana koperasi berasal dari simpanan anggota, jadi saldo tidak boleh minus.
+  if (type === "keluar") {
+    const { data: bal } = await supabase
+      .from("koperasi_balance")
+      .select("saldo")
+      .eq("koperasi_id", profile.koperasi_id)
+      .maybeSingle();
+    const saldo = Number(bal?.saldo ?? 0);
+    if (amount > saldo) {
+      throw new Error(
+        `Saldo kas tidak mencukupi. Tersedia ${formatIDR(saldo)}. Koperasi tidak dapat mengeluarkan lebih dari yang ada di kas.`
+      );
+    }
+  }
 
   const { data: tx, error } = await supabase
     .from("transactions")
