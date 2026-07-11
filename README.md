@@ -112,12 +112,14 @@ Buka `http://localhost:3000` — akan redirect ke halaman login.
 ## Kredensial Demo untuk Juri
 
 _Isi setelah seed data dibuat:_
-- Ketua: `ketua@demo.koperasiterang.id` / `[password]`
-- Bendahara: `bendahara@demo.koperasiterang.id` / `[password]`
-- Sekretaris: `sekretaris@demo.koperasiterang.id` / `[password]`
-- Pengawas: `pengawas@demo.koperasiterang.id` / `[password]`
-- Anggota: `anggota@demo.koperasiterang.id` / `[password]`
-- Peninjau (role dinas): `juri@demo.koperasiterang.id` / `[password]`
+- Ketua: `ketua@koperasiterang.demo` 
+- Bendahara: `bendahara@koperasiterang.demo`
+- Sekretaris: `sekretaris@koperasiterang.demo`
+- Pengawas: `pengawas@koperasiterang.demo`
+- Anggota: `anggota@koperasiterang.demo`
+- Peninjau (role dinas): `juri@koperasiterang.demo`
+
+Semua akun menggunakan password `Demo123!`
 
 **Alur demo separation of duties:** login sebagai *bendahara* → catat pengeluaran
 > Rp 5.000.000 (masuk antrian). Lalu *ketua* + *sekretaris* (atau *pengawas*)
